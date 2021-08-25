@@ -13,8 +13,7 @@ deploy-dev:
     - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/build/main
     - cd $(pwd)/build
     - export SSHPASS=$USER_PSWD
-    - ls
-    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r . $USER_NAME@$SERVER_NAME:~/tools
+    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r $(pwd) $USER_NAME@$SERVER_NAME:~/tools
   only:
     - master
 
