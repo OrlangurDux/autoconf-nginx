@@ -11,8 +11,9 @@ deploy-dev:
   script:
     - cd $(pwd)/src
     - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/build/main
+    - mv $(pwd)/build/main $(pwd)/build/autoconf-nginx
     - export SSHPASS=$USER_PSWD
-    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r $(pwd)/build $USER_NAME@$SERVER_NAME:~/tools
+    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r $(pwd)/build/ $USER_NAME@$SERVER_NAME:~/tools
   only:
     - master
 
