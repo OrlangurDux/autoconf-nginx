@@ -14,7 +14,7 @@ deploy-dev:
     - mv $(pwd)/build/main $(pwd)/build/autoconf-nginx
     - export SSHPASS=$USER_PSWD
     - cd $(pwd)/build
-    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r $(pwd)/* $USER_NAME@$SERVER_NAME:~/tools
+    - sshpass -e scp -P$SERVER_PORT -o StrictHostKeyChecking=no -r $(pwd)/* $USER_NAME@$SERVER_NAME:~/tools
   only:
     - master
 
