@@ -1,0 +1,1 @@
+# Autmatic configuration NGINX

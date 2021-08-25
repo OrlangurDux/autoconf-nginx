@@ -1,0 +1,19 @@
+image: golang:latest
+stages:
+  - deploy
+before_script:
+  - apt-get update -qq && apt-get install -y -qq sshpass
+  - go get gopkg.in/yaml.v3
+  - mkdir -p $(pwd)/build
+
+deploy-dev:
+  stage: deploy  
+  script:
+    - cd $(pwd)/src
+    - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/build/main
+    - cd $(pwd)/build
+    - export SSHPASS=$USER_PSWD
+    - sshpass -e scp -P36702 -o StrictHostKeyChecking=no -r . $USER_NAME@$SERVER_NAME:~/tools
+  only:
+    - master
+
