@@ -4,8 +4,8 @@ stages:
 before_script:
   - apt-get update -qq && apt-get install -y -qq sshpass
   - go get gopkg.in/yaml.v3
-  - mkdir -p $(pwd)/build/template
-  - cp -rf $(pwd)/src/template $(pwd)/build/template
+  - mkdir -p $(pwd)/build
+  - cp -rf $(pwd)/src/template $(pwd)/build
 
 deploy-dev:
   stage: deploy  
