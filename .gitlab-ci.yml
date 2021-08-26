@@ -4,16 +4,16 @@ stages:
 before_script:
   - apt-get update -qq && apt-get install -y -qq sshpass
   - go get gopkg.in/yaml.v3
-  - mkdir -p $(pwd)/build
+  - mkdir -p $(pwd)/build/template
+  - cp -rf $(pwd)/template $(pwd)/build/template
 
 deploy-dev:
   stage: deploy  
   script:
     - cd $(pwd)/src
-    - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/build/main
+    - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/../build/main
+    - cd ..
     - mv $(pwd)/build/main $(pwd)/build/autoconf-nginx
-    - mkdir -p $(pwd)/build/template
-    - cp -rf $(pwd)/src/template $(pwd)/build/template
     - export SSHPASS=$USER_PSWD
     - cd $(pwd)/build
     - ls
