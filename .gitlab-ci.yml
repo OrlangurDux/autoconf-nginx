@@ -4,7 +4,8 @@ stages:
 before_script:
   - apt-get update -qq && apt-get install -y -qq sshpass
   - go get gopkg.in/yaml.v3
-  - mkdir -p $(pwd)/build
+  - mkdir -p $(pwd)/build/template
+  - YES | cp -rf $(pwd)/template $(pwd)/build/template
 
 deploy-dev:
   stage: deploy  
@@ -14,7 +15,7 @@ deploy-dev:
     - mv $(pwd)/build/main $(pwd)/build/autoconf-nginx
     - export SSHPASS=$USER_PSWD
     - cd $(pwd)/build
-    - sshpass -e scp -P$SERVER_PORT -o StrictHostKeyChecking=no -r $(pwd)/* $USER_NAME@$SERVER_NAME:~/tools
+    - sshpass -e scp -P$SERVER_PORT -o StrictHostKeyChecking=no -r $(pwd)/* $USER_NAME@$SERVER_NAME:~/tools/autoconf-nginx
   only:
     - master
 
