@@ -14,10 +14,10 @@ deploy-dev:
     - go build -race -ldflags "-extldflags '-static'" -o $(pwd)/../build/main
     - cd ..
     - mv $(pwd)/build/main $(pwd)/build/autoconf-nginx
+    - mv $(pwd)/build $(pwd)/autoconf-nginx
     - export SSHPASS=$USER_PSWD
-    - cd $(pwd)/build
-    - ls
-    - sshpass -e scp -P$SERVER_PORT -o StrictHostKeyChecking=no -r $(pwd)/* $USER_NAME@$SERVER_NAME:~/tools/autoconf-nginx/
+    - cd $(pwd)/autoconf-nginx
+    - sshpass -e scp -P$SERVER_PORT -o StrictHostKeyChecking=no -r $(pwd) $USER_NAME@$SERVER_NAME:~/tools
   only:
     - master
 
