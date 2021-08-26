@@ -6,7 +6,8 @@ before_script:
   - go get gopkg.in/yaml.v3
   - mkdir -p $(pwd)/build/template
   - cp -rf $(pwd)/src/template $(pwd)/build/template
-  - ls
+  - ls build
+  - ls src
 
 deploy-dev:
   stage: deploy  
