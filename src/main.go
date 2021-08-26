@@ -85,7 +85,11 @@ func main() {
 		os.Exit(1)
 	} else {
 		for _, f := range configs {
-			var template string = "template/"
+			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+			if err != nil {
+					log.Print(err)
+			}
+			var template string = dir + "/template/"
 			c, err := readConf(f)
 			if err != nil {
 				log.Fatal(err)
