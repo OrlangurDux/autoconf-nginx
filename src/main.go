@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -51,7 +53,6 @@ func searchConfigFiles(path string) []string {
 	var configs []string
 	var e = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && info.Name() == "nginx.yaml" {
-			log.Print(info)
 			configs = append(configs, path)
 		}
 		return nil
@@ -87,12 +88,12 @@ func main() {
 		for _, f := range configs {
 			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 			if err != nil {
-					log.Print(err)
+				log.Print(err)
 			}
 			var template string = dir + "/template/"
 			c, err := readConf(f)
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
 			}
 
 			configFile := vhostsDir + c.Conf.Host + ".conf"
@@ -118,9 +119,27 @@ func main() {
 					log.Print(err)
 					os.Exit(1)
 				}
-
-				fmt.Printf("%v", c)
 			}
 		}
+
+		cmd := exec.Command("nginx", "-t")
+		stdout, err := cmd.Output()
+
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		if strings.Contains(string(stdout[:]), "successful") {
+			cmd = exec.Command("nginx", "-s reload")
+			stdout, err = cmd.Output()
+
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+		}
+		// Print the output
+		fmt.Println(string(stdout))
 	}
 }
