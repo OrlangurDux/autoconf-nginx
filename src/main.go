@@ -126,9 +126,11 @@ func main() {
 		stdout, err := cmd.Output()
 
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Print(err.Error())
 			os.Exit(1)
 		}
+
+		log.Print(string(stdout[:]))
 
 		if strings.Contains(string(stdout[:]), "successful") {
 			cmd = exec.Command("nginx", "-s reload")
@@ -140,6 +142,6 @@ func main() {
 			}
 		}
 		// Print the output
-		fmt.Println(string(stdout))
+		log.Print(string(stdout[:]))
 	}
 }
