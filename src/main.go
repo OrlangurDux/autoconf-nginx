@@ -122,7 +122,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("service", "apache2", "status")
+		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/apache2 status")
 		stdout, err := cmd.Output()
 
 		if err != nil {
