@@ -122,7 +122,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("bash", "-c", "/etc/init.d/nginx", "configtest")
+		cmd := exec.Command("bash", "/etc/init.d/apache2", "status")
 		stdout, err := cmd.Output()
 
 		if err != nil {
@@ -147,7 +147,7 @@ func main() {
 			stdout, err = cmd.Output()
 
 			if err != nil {
-				fmt.Println(err.Error())
+				log.Print(err.Error())
 				os.Exit(1)
 			}
 		}
