@@ -122,8 +122,18 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("nginx", "-t")
+		cmd := exec.Command("/etc/init.d/nginx", "configtest")
 		stdout, err := cmd.Output()
+
+		if err != nil {
+			log.Print(err.Error())
+			os.Exit(1)
+		}
+
+		log.Print(string(stdout[:]))
+
+		cmd = exec.Command("nginx", "-t")
+		stdout, err = cmd.Output()
 
 		if err != nil {
 			log.Print(err.Error())
