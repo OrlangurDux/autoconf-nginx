@@ -122,7 +122,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("ls", "-lah")
+		cmd := exec.Command("service", "apache2", "status")
 		stdout, err := cmd.Output()
 
 		if err != nil {
