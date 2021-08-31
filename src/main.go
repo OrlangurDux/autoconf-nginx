@@ -126,7 +126,7 @@ func main() {
 		stdout, err := cmd.Output()
 
 		if err != nil {
-			log.Print(err.Error())
+			log.Print(err)
 			os.Exit(1)
 		}
 
@@ -136,7 +136,7 @@ func main() {
 		stdout, err = cmd.Output()
 
 		if err != nil {
-			log.Print(err.Error())
+			log.Print(err)
 			os.Exit(1)
 		}
 
@@ -147,7 +147,7 @@ func main() {
 			stdout, err = cmd.Output()
 
 			if err != nil {
-				log.Print(err.Error())
+				log.Print(err)
 				os.Exit(1)
 			}
 		}
