@@ -122,7 +122,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("bash", "/etc/init.d/apache2", "status")
+		cmd := exec.Command("ls", "-lah")
 		stdout, err := cmd.Output()
 
 		if err != nil {
