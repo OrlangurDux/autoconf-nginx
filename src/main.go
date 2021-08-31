@@ -122,7 +122,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx status")
+		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx configtest")
 		stdout, err := cmd.Output()
 
 		if err != nil {
