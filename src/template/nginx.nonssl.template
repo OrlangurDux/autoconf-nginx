@@ -20,6 +20,6 @@ server {
   }
 
   access_log /var/log/nginx/#domain#.access.log;
-  error_log /var/log/nginx/#domain#.error.log notice;  
+  error_log /var/log/nginx/#domain#.error.log notice;
 
 }
