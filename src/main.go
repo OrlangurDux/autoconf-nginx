@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -122,7 +121,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx configtest")
+		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx check-reload")
 		stdout, err := cmd.Output()
 
 		if err != nil {
@@ -132,7 +131,7 @@ func main() {
 
 		log.Print(string(stdout[:]))
 
-		cmd = exec.Command("nginx", "-t")
+		/*cmd = exec.Command("nginx", "-t")
 		stdout, err = cmd.Output()
 
 		if err != nil {
@@ -152,6 +151,6 @@ func main() {
 			}
 		}
 		// Print the output
-		log.Print(string(stdout[:]))
+		log.Print(string(stdout[:]))*/
 	}
 }
