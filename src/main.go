@@ -24,10 +24,12 @@ var (
 // structure yaml file
 type confNginx struct {
 	Conf struct {
-		Host      string `yaml:"host"`
-		Container string `yaml:"container"`
-		Port      int64
-		Ssl       int64
+		Host        string `yaml:"host"`
+		Container   string `yaml:"container"`
+		Port        int64
+		Ssl         int64
+		SslNameCert string `yaml:"sslNameCert"`
+		SslNameKey  string `yaml:"sslNameKey"`
 	}
 }
 
@@ -113,6 +115,8 @@ func main() {
 				replace := bytes.Replace(file, []byte("#domain#"), []byte(c.Conf.Host), -1)
 				replace = bytes.Replace(replace, []byte("#port#"), []byte(strconv.Itoa(int(c.Conf.Port))), -1)
 				replace = bytes.Replace(replace, []byte("#container#"), []byte(c.Conf.Container), -1)
+				replace = bytes.Replace(replace, []byte("#sslnamecert#"), []byte(c.Conf.SslNameCert), -1)
+				replace = bytes.Replace(replace, []byte("#sslnamekey#"), []byte(c.Conf.SslNameKey), -1)
 
 				if err := ioutil.WriteFile(configFile, replace, 0666); err != nil {
 					log.Print(err)
