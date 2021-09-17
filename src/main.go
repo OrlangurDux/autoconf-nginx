@@ -19,6 +19,8 @@ var (
 	entryDir string
 	//variables for save generated files conf
 	vhostsDir string
+	//variable for configuration name file
+	configName string
 )
 
 // structure yaml file
@@ -53,7 +55,7 @@ func readConf(filename string) (*confNginx, error) {
 func searchConfigFiles(path string) []string {
 	var configs []string
 	var e = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err == nil && info.Name() == "nginx.yaml" {
+		if err == nil && info.Name() == configName {
 			configs = append(configs, path)
 		}
 		return nil
@@ -66,8 +68,9 @@ func searchConfigFiles(path string) []string {
 
 // initializate param from cli
 func init() {
-	flag.StringVar(&entryDir, "entry-dir", "", "Scan config directory")
-	flag.StringVar(&vhostsDir, "vhosts-dir", "", "Scan config directory")
+	flag.StringVar(&entryDir, "input-dir", "", "Scan config directory")
+	flag.StringVar(&vhostsDir, "output-dir", "", "Scan config directory")
+	flag.StringVar(&configName, "config-name", "nginx.yaml", "Config name for search yaml")
 	flag.Parse()
 
 	if entryDir == "" {
@@ -129,32 +132,9 @@ func main() {
 		stdout, err := cmd.Output()
 
 		if err != nil {
-			log.Print(err)
+			log.Print(string(stdout[:]))
+			fmt.Println(err)
 			os.Exit(1)
 		}
-
-		log.Print(string(stdout[:]))
-
-		/*cmd = exec.Command("nginx", "-t")
-		stdout, err = cmd.Output()
-
-		if err != nil {
-			log.Print(err)
-			os.Exit(1)
-		}
-
-		log.Print(string(stdout[:]))
-
-		if strings.Contains(string(stdout[:]), "successful") {
-			cmd = exec.Command("nginx", "-s reload")
-			stdout, err = cmd.Output()
-
-			if err != nil {
-				log.Print(err)
-				os.Exit(1)
-			}
-		}
-		// Print the output
-		log.Print(string(stdout[:]))*/
 	}
 }
