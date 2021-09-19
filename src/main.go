@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"autoconf/bot"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,6 +23,8 @@ var (
 	vhostsDir string
 	//variable for configuration name file
 	configName string
+	//BotToken token for telegram bot
+	botToken string
 )
 
 // structure yaml file
@@ -71,15 +75,20 @@ func init() {
 	flag.StringVar(&entryDir, "input-dir", "", "Scan config directory")
 	flag.StringVar(&vhostsDir, "output-dir", "", "Scan config directory")
 	flag.StringVar(&configName, "config-name", "nginx.yaml", "Config name for search yaml")
+	flag.StringVar(&botToken, "bot-token", "", "Telegram bot token")
 	flag.Parse()
 
 	if entryDir == "" {
-		log.Print("-entry-dir is required param")
+		log.Print("-input-dir is required param")
 		os.Exit(1)
 	}
 	if vhostsDir == "" {
-		log.Print("-vhosts-dir is required param")
+		log.Print("-output-dir is required param")
 		os.Exit(1)
+	}
+
+	if botToken != "" {
+		bot.BotToken = botToken
 	}
 }
 
@@ -132,6 +141,7 @@ func main() {
 		stdout, err := cmd.Output()
 
 		if err != nil {
+			bot.SendBotMessage("Test")
 			log.Print(string(stdout[:]))
 			fmt.Println(err)
 			os.Exit(1)
