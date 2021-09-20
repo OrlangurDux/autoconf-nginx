@@ -25,6 +25,8 @@ var (
 	configName string
 	//BotToken token for telegram bot
 	botToken string
+	//JoinKey key for join telegram chat
+	joinKey string
 )
 
 // structure yaml file
@@ -76,6 +78,7 @@ func init() {
 	flag.StringVar(&vhostsDir, "output-dir", "", "Scan config directory")
 	flag.StringVar(&configName, "config-name", "nginx.yaml", "Config name for search yaml")
 	flag.StringVar(&botToken, "bot-token", "", "Telegram bot token")
+	flag.StringVar(&joinKey, "join-key", "", "Key for join telegram chat")
 	flag.Parse()
 
 	if entryDir == "" {
@@ -88,7 +91,12 @@ func init() {
 	}
 
 	if botToken != "" {
-		bot.BotToken = botToken
+		if joinKey == "" {
+			log.Print("-join-key is required param if use -bot-token param")
+		} else {
+			bot.BotToken = botToken
+			bot.JoinKey = joinKey
+		}
 	}
 }
 
@@ -109,8 +117,33 @@ func main() {
 				log.Print(err)
 			}
 
+			bUpdate := false
+
 			configFile := vhostsDir + c.Conf.Host + ".conf"
-			if _, err := os.Stat(configFile); os.IsNotExist(err) {
+			_, err = os.Stat(configFile)
+			if err == nil {
+				modifiedConfigFile, err := os.Stat(configFile)
+				if err != nil {
+					log.Print(err)
+				}
+				modifiedConfigTime := modifiedConfigFile.ModTime().Unix()
+
+				modifiedYamlFile, err := os.Stat(f)
+
+				if err != nil {
+					log.Print(err)
+				}
+
+				modifiedYamlTime := modifiedYamlFile.ModTime().Unix()
+
+				if modifiedYamlTime >= modifiedConfigTime {
+					bUpdate = true
+				}
+				log.Println("Modified time: ", modifiedYamlTime)
+				log.Println("Modified time: ", modifiedConfigTime)
+				log.Println("Modified time: ", modifiedYamlTime >= modifiedConfigTime)
+			}
+			if os.IsNotExist(err) || bUpdate {
 				if c.Conf.Ssl == 1 {
 					template = template + "nginx.ssl.template"
 				} else {
@@ -141,10 +174,12 @@ func main() {
 		stdout, err := cmd.Output()
 
 		if err != nil {
-			bot.SendBotMessage("Test")
+			//bot.SendBotMessage("Test")
 			log.Print(string(stdout[:]))
 			fmt.Println(err)
-			os.Exit(1)
+			//os.Exit(1)
 		}
+
+		bot.InitBot()
 	}
 }
