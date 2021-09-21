@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"autoconf/bot"
 
@@ -100,86 +101,89 @@ func init() {
 	}
 }
 
-func main() {
-	configs := searchConfigFiles(entryDir)
-	if configs == nil {
-		log.Print("Configs files not found")
-		os.Exit(1)
-	} else {
-		for _, f := range configs {
-			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+func generateFileConfig() {
+	for {
+		configs := searchConfigFiles(entryDir)
+		if configs == nil {
+			log.Print("Configs files not found. Sleep...")
+		} else {
+			for _, f := range configs {
+				dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+				if err != nil {
+					log.Print(err)
+				}
+				var template string = dir + "/template/"
+				c, err := readConf(f)
+				if err != nil {
+					log.Print(err)
+				}
+
+				bUpdate := false
+
+				configFile := vhostsDir + c.Conf.Host + ".conf"
+				_, err = os.Stat(configFile)
+				if err == nil {
+					modifiedConfigFile, err := os.Stat(configFile)
+					if err != nil {
+						log.Print(err)
+					}
+					modifiedConfigTime := modifiedConfigFile.ModTime().Unix()
+
+					modifiedYamlFile, err := os.Stat(f)
+
+					if err != nil {
+						log.Print(err)
+					}
+
+					modifiedYamlTime := modifiedYamlFile.ModTime().Unix()
+
+					if modifiedYamlTime >= modifiedConfigTime {
+						bUpdate = true
+					}
+				}
+				if os.IsNotExist(err) || bUpdate {
+					if c.Conf.Ssl == 1 {
+						template = template + "nginx.ssl.template"
+					} else {
+						template = template + "nginx.nonssl.template"
+					}
+
+					file, err := ioutil.ReadFile(template)
+
+					if err != nil {
+						log.Print(err)
+					} else {
+
+						replace := bytes.Replace(file, []byte("#domain#"), []byte(c.Conf.Host), -1)
+						replace = bytes.Replace(replace, []byte("#port#"), []byte(strconv.Itoa(int(c.Conf.Port))), -1)
+						replace = bytes.Replace(replace, []byte("#container#"), []byte(c.Conf.Container), -1)
+						replace = bytes.Replace(replace, []byte("#sslnamecert#"), []byte(c.Conf.SslNameCert), -1)
+						replace = bytes.Replace(replace, []byte("#sslnamekey#"), []byte(c.Conf.SslNameKey), -1)
+
+						if err := ioutil.WriteFile(configFile, replace, 0666); err != nil {
+							log.Print(err)
+						}
+					}
+				}
+			}
+
+			cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx check-reload")
+
+			stdout, err := cmd.CombinedOutput()
+
 			if err != nil {
-				log.Print(err)
-			}
-			var template string = dir + "/template/"
-			c, err := readConf(f)
-			if err != nil {
-				log.Print(err)
+				//bot.SendBotMessage("Test")
+				log.Print(string(stdout[:]))
+				fmt.Println(err)
+				//os.Exit(1)
 			}
 
-			bUpdate := false
-
-			configFile := vhostsDir + c.Conf.Host + ".conf"
-			_, err = os.Stat(configFile)
-			if err == nil {
-				modifiedConfigFile, err := os.Stat(configFile)
-				if err != nil {
-					log.Print(err)
-				}
-				modifiedConfigTime := modifiedConfigFile.ModTime().Unix()
-
-				modifiedYamlFile, err := os.Stat(f)
-
-				if err != nil {
-					log.Print(err)
-				}
-
-				modifiedYamlTime := modifiedYamlFile.ModTime().Unix()
-
-				if modifiedYamlTime >= modifiedConfigTime {
-					bUpdate = true
-				}
-				log.Println("Modified time: ", modifiedYamlTime)
-				log.Println("Modified time: ", modifiedConfigTime)
-				log.Println("Modified time: ", modifiedYamlTime >= modifiedConfigTime)
-			}
-			if os.IsNotExist(err) || bUpdate {
-				if c.Conf.Ssl == 1 {
-					template = template + "nginx.ssl.template"
-				} else {
-					template = template + "nginx.nonssl.template"
-				}
-
-				file, err := ioutil.ReadFile(template)
-
-				if err != nil {
-					log.Print(err)
-					os.Exit(1)
-				}
-
-				replace := bytes.Replace(file, []byte("#domain#"), []byte(c.Conf.Host), -1)
-				replace = bytes.Replace(replace, []byte("#port#"), []byte(strconv.Itoa(int(c.Conf.Port))), -1)
-				replace = bytes.Replace(replace, []byte("#container#"), []byte(c.Conf.Container), -1)
-				replace = bytes.Replace(replace, []byte("#sslnamecert#"), []byte(c.Conf.SslNameCert), -1)
-				replace = bytes.Replace(replace, []byte("#sslnamekey#"), []byte(c.Conf.SslNameKey), -1)
-
-				if err := ioutil.WriteFile(configFile, replace, 0666); err != nil {
-					log.Print(err)
-					os.Exit(1)
-				}
-			}
+			time.Sleep(time.Millisecond * time.Duration(10000))
 		}
-
-		cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx check-reload")
-		stdout, err := cmd.Output()
-
-		if err != nil {
-			//bot.SendBotMessage("Test")
-			log.Print(string(stdout[:]))
-			fmt.Println(err)
-			//os.Exit(1)
-		}
-
-		bot.InitBot()
 	}
+}
+
+func main() {
+	go generateFileConfig()
+	bot.InitBot()
 }

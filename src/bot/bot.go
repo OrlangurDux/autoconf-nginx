@@ -2,8 +2,8 @@ package bot
 
 import (
 	"log"
-	"os"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/Syfaro/telegram-bot-api"
 )
@@ -13,25 +13,27 @@ var (
 	BotToken string
 	//JoinKey key for connect notification
 	JoinKey string
-	bot     *tgbotapi.BotAPI
+	//Bot for boot api
+	Bot *tgbotapi.BotAPI
 )
 
 func InitBot() {
 	var err error
-	bot, err = tgbotapi.NewBotAPI(BotToken)
-	if err != nil {
-		log.Print(err)
-		os.Exit(1)
+	for {
+		Bot, err = tgbotapi.NewBotAPI(BotToken)
+		if err != nil {
+			log.Print(err)
+			time.Sleep(time.Millisecond * time.Duration(10000))
+		} else {
+			break
+		}
 	}
 
-	// u - struct with config for get update
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	// use config u create channel for push message
-	updates, _ := bot.GetUpdatesChan(u)
-	// in channel updates send truct type Update
-	// reading and processing request
+	updates, _ := Bot.GetUpdatesChan(u)
+
 	for update := range updates {
 		log.Println(update.Message.Command())
 		reply := "I don't now"
@@ -47,16 +49,16 @@ func InitBot() {
 		case "join":
 			key := strings.Split(update.Message.Text, " ")
 			if key[1] == JoinKey {
-				reply = "Joined"
+				reply = "Joined monitoring"
 			} else {
-				reply = "Error joined channel"
+				reply = "Error joined monitoring"
 			}
 		}
 		//log.Println(update.Message)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 		log.Println(update.Message.Chat.ID)
 
-		bot.Send(msg)
+		Bot.Send(msg)
 	}
 }
 
@@ -65,5 +67,5 @@ func SendBotMessage(msg string) {
 
 	message := tgbotapi.NewMessage(355199786, msg)
 
-	bot.Send(message)
+	Bot.Send(message)
 }
