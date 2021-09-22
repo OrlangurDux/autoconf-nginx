@@ -107,6 +107,7 @@ func generateFileConfig() {
 		if configs == nil {
 			log.Print("Configs files not found. Sleep...")
 		} else {
+			bServiceRestart := false
 			for _, f := range configs {
 				dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 				if err != nil {
@@ -162,20 +163,24 @@ func generateFileConfig() {
 
 						if err := ioutil.WriteFile(configFile, replace, 0666); err != nil {
 							log.Print(err)
+						} else {
+							bServiceRestart = true
 						}
 					}
 				}
-			}
 
-			cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx check-reload")
+				if bServiceRestart {
+					cmd := exec.Command("/bin/sh", "-c", "/etc/init.d/nginx check-reload")
 
-			stdout, err := cmd.CombinedOutput()
+					stdout, err := cmd.CombinedOutput()
 
-			if err != nil {
-				//bot.SendBotMessage("Test")
-				log.Print(string(stdout[:]))
-				fmt.Println(err)
-				//os.Exit(1)
+					if err != nil {
+						//bot.SendBotMessage("Test")
+						log.Print(string(stdout[:]))
+						fmt.Println(err)
+						//os.Exit(1)
+					}
+				}
 			}
 
 			time.Sleep(time.Millisecond * time.Duration(10000))
