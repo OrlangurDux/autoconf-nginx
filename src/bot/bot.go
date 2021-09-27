@@ -54,6 +54,7 @@ func InitBot() {
 			if key[1] == JoinKey {
 				reply = "Joined monitoring"
 				config.SysConfig.Telegram.ChatID = update.Message.Chat.ID
+				ChatID = update.Message.Chat.ID
 				config.WriteSysConfig()
 			} else {
 				reply = "Error joined monitoring"
