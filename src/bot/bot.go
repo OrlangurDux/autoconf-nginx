@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"autoconf/config"
 	"log"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ var (
 	JoinKey string
 	//Bot for boot api
 	Bot *tgbotapi.BotAPI
+	//ChatID telegram chat id
+	ChatID int64
 )
 
 func InitBot() {
@@ -36,7 +39,7 @@ func InitBot() {
 
 	for update := range updates {
 		log.Println(update.Message.Command())
-		reply := "I don't now"
+		reply := "Command don't find."
 		if update.Message == nil {
 			continue
 		}
@@ -45,27 +48,25 @@ func InitBot() {
 
 		switch update.Message.Command() {
 		case "start":
-			reply = "Hi. I'am telegram bot"
+			reply = "/join KEY - for joined monitoring service autoconf"
 		case "join":
 			key := strings.Split(update.Message.Text, " ")
 			if key[1] == JoinKey {
 				reply = "Joined monitoring"
+				config.SysConfig.Telegram.ChatID = update.Message.Chat.ID
+				config.WriteSysConfig()
 			} else {
 				reply = "Error joined monitoring"
 			}
 		}
-		//log.Println(update.Message)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 		log.Println(update.Message.Chat.ID)
-
 		Bot.Send(msg)
 	}
 }
 
 //SendBotMessage send in telegram bot message
 func SendBotMessage(msg string) {
-
-	message := tgbotapi.NewMessage(355199786, msg)
-
+	message := tgbotapi.NewMessage(ChatID, msg)
 	Bot.Send(message)
 }

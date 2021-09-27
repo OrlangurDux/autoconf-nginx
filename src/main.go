@@ -1,6 +1,8 @@
 package main
 
 import (
+	"autoconf/bot"
+	"autoconf/config"
 	"bytes"
 	"flag"
 	"fmt"
@@ -11,8 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
-
-	"autoconf/bot"
 
 	"gopkg.in/yaml.v3"
 )
@@ -31,7 +31,7 @@ var (
 )
 
 // structure yaml file
-type confNginx struct {
+type configHost struct {
 	Conf struct {
 		Host        string `yaml:"host"`
 		Container   string `yaml:"container"`
@@ -42,14 +42,30 @@ type confNginx struct {
 	}
 }
 
-//read yaml configuration to structure coonfNginx
-func readConf(filename string) (*confNginx, error) {
+//read yaml configuration to structure config host
+func readHostConfig(filename string) (*configHost, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	c := &confNginx{}
+	c := &configHost{}
+	err = yaml.Unmarshal(buf, c)
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	return c, nil
+}
+
+//read yaml configuration to structure system configuration
+func readSysConfig(filename string) (*config.Config, error) {
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &config.Config{}
 	err = yaml.Unmarshal(buf, c)
 	if err != nil {
 		return nil, fmt.Errorf("in file %q: %v", filename, err)
@@ -61,14 +77,17 @@ func readConf(filename string) (*confNginx, error) {
 //serach recrusive direcotry and subdirectory config file
 func searchConfigFiles(path string) []string {
 	var configs []string
-	var e = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && info.Name() == configName {
 			configs = append(configs, path)
 		}
 		return nil
 	})
-	if e != nil {
-		log.Fatal(e)
+	if err != nil {
+		if bot.Bot != nil {
+			bot.SendBotMessage("Don't walk in dir " + path + ". Service is down. Error: " + err.Error())
+		}
+		log.Fatal(err)
 	}
 	return configs
 }
@@ -99,6 +118,15 @@ func init() {
 			bot.JoinKey = joinKey
 		}
 	}
+
+	sysConfig, err := readSysConfig("config.yaml")
+	if err != nil {
+		config.SysConfig = config.Config{Telegram: config.Telegram{ChatID: 0}}
+		log.Print(err)
+	} else {
+		config.SysConfig = *sysConfig
+		bot.ChatID = sysConfig.Telegram.ChatID
+	}
 }
 
 func generateFileConfig() {
@@ -111,11 +139,17 @@ func generateFileConfig() {
 			for _, f := range configs {
 				dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 				if err != nil {
+					if bot.Bot != nil {
+						bot.SendBotMessage("Don't read dir " + dir + ". Error: " + err.Error())
+					}
 					log.Print(err)
 				}
 				var template string = dir + "/template/"
-				c, err := readConf(f)
+				c, err := readHostConfig(f)
 				if err != nil {
+					if bot.Bot != nil {
+						bot.SendBotMessage("Don't parse config file " + f + ". Error:" + err.Error())
+					}
 					log.Print(err)
 				}
 
@@ -126,6 +160,9 @@ func generateFileConfig() {
 				if err == nil {
 					modifiedConfigFile, err := os.Stat(configFile)
 					if err != nil {
+						if bot.Bot != nil {
+							bot.SendBotMessage("Don't get modified date from config file. Error: " + err.Error())
+						}
 						log.Print(err)
 					}
 					modifiedConfigTime := modifiedConfigFile.ModTime().Unix()
@@ -133,6 +170,9 @@ func generateFileConfig() {
 					modifiedYamlFile, err := os.Stat(f)
 
 					if err != nil {
+						if bot.Bot != nil {
+							bot.SendBotMessage("Don't get modified date from yaml file. Error: " + err.Error())
+						}
 						log.Print(err)
 					}
 
@@ -152,6 +192,9 @@ func generateFileConfig() {
 					file, err := ioutil.ReadFile(template)
 
 					if err != nil {
+						if bot.Bot != nil {
+							bot.SendBotMessage("Don't read template file. Error: " + err.Error())
+						}
 						log.Print(err)
 					} else {
 
@@ -162,8 +205,20 @@ func generateFileConfig() {
 						replace = bytes.Replace(replace, []byte("#sslnamekey#"), []byte(c.Conf.SslNameKey), -1)
 
 						if err := ioutil.WriteFile(configFile, replace, 0666); err != nil {
+							if bot.Bot != nil {
+								bot.SendBotMessage("Don't write config file " + configFile + ". Error: " + err.Error())
+							}
 							log.Print(err)
 						} else {
+							var message string
+							if bUpdate {
+								message = "Configuration file " + configFile + " updated."
+							} else {
+								message = "Configuration file " + configFile + " added."
+							}
+							if bot.Bot != nil {
+								bot.SendBotMessage(message)
+							}
 							bServiceRestart = true
 						}
 					}
@@ -175,7 +230,9 @@ func generateFileConfig() {
 					stdout, err := cmd.CombinedOutput()
 
 					if err != nil {
-						//bot.SendBotMessage("Test")
+						if bot.Bot != nil {
+							bot.SendBotMessage(string(stdout[:]))
+						}
 						log.Print(string(stdout[:]))
 						fmt.Println(err)
 						//os.Exit(1)
