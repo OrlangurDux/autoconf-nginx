@@ -101,32 +101,70 @@ func init() {
 	flag.StringVar(&joinKey, "join-key", "", "Key for join telegram chat")
 	flag.Parse()
 
-	if entryDir == "" {
-		log.Print("-input-dir is required param")
-		os.Exit(1)
-	}
-	if vhostsDir == "" {
-		log.Print("-output-dir is required param")
-		os.Exit(1)
-	}
-
-	if botToken != "" {
-		if joinKey == "" {
-			log.Print("-join-key is required param if use -bot-token param")
-		} else {
-			bot.BotToken = botToken
-			bot.JoinKey = joinKey
-		}
-	}
-
 	sysConfig, err := readSysConfig("config.yaml")
 	if err != nil {
-		config.SysConfig = config.Config{Telegram: config.Telegram{ChatID: 0}}
+		config.SysConfig = config.Config{Telegram: config.Telegram{ChatID: 0, JoinKey: "", BotToken: ""}, Settings: config.Settings{EntryDir: "", VhostsDir: "", ConfigName: "nginx.yaml"}}
 		log.Print(err)
 	} else {
 		config.SysConfig = *sysConfig
 		bot.ChatID = sysConfig.Telegram.ChatID
 	}
+
+	if entryDir == "" {
+		if sysConfig.Settings.EntryDir != "" {
+			entryDir = sysConfig.Settings.EntryDir
+		} else {
+			log.Print("-input-dir is required param")
+			os.Exit(1)
+		}
+	} else {
+		config.SysConfig.Settings.EntryDir = entryDir
+	}
+
+	if vhostsDir == "" {
+		if sysConfig.Settings.EntryDir != "" {
+			vhostsDir = sysConfig.Settings.VhostsDir
+		} else {
+			log.Print("-output-dir is required param")
+			os.Exit(1)
+		}
+	} else {
+		config.SysConfig.Settings.VhostsDir = vhostsDir
+	}
+
+	if configName == "" {
+		if sysConfig.Settings.ConfigName != "" {
+			configName = sysConfig.Settings.ConfigName
+		}
+	} else {
+		config.SysConfig.Settings.ConfigName = configName
+	}
+
+	if botToken != "" {
+		if joinKey == "" {
+			if sysConfig.Telegram.JoinKey != "" {
+				bot.JoinKey = sysConfig.Telegram.JoinKey
+			} else {
+				log.Print("-join-key is required param if use -bot-token param")
+			}
+		} else {
+			bot.BotToken = botToken
+			bot.JoinKey = joinKey
+			config.SysConfig.Telegram.JoinKey = joinKey
+			config.SysConfig.Telegram.BotToken = botToken
+		}
+	} else {
+		if sysConfig.Telegram.BotToken != "" {
+			if sysConfig.Telegram.JoinKey != "" {
+				bot.JoinKey = sysConfig.Telegram.JoinKey
+				bot.BotToken = sysConfig.Telegram.BotToken
+			} else {
+				log.Print("-join-key is required param if use -bot-token param")
+			}
+		}
+	}
+
+	config.WriteSysConfig()
 }
 
 func generateFileConfig() {
